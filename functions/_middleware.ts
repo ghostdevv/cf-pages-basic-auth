@@ -1,7 +1,9 @@
 interface Context {
     request: Request;
     next: () => Promise<Response>;
-    env: {};
+    env: {
+        USERS: string;
+    };
 }
 
 interface User {
@@ -9,15 +11,7 @@ interface User {
     password: string;
 }
 
-// I would recommend making this an environment variable
-const users: User[] = [
-    {
-        username: 'ghost',
-        password: 'test',
-    },
-];
-
-function getUser(authorization: string) {
+function getUser(users: User[], authorization: string) {
     const token = authorization.replace('Basic ', '');
 
     const [username, password] = atob(token).split(':');
@@ -45,7 +39,9 @@ export async function onRequest(context: Context): Promise<Response> {
             },
         });
 
-    const user = getUser(authorization);
+    const users: User[] = JSON.parse(context.env.USERS ?? '[]');
+
+    const user = getUser(users, authorization);
 
     if (!user)
         return new Response('Unauthorized', {
